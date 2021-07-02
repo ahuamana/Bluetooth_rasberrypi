@@ -44,6 +44,8 @@ public class MainFragment extends Fragment {
     Button btnactivarbluetooh, btnconectarRasberry;
     ListView listView;
 
+    String address;
+
 
     public static MainFragment newInstance() {
         return new MainFragment();
@@ -65,7 +67,8 @@ public class MainFragment extends Fragment {
         btnactivarbluetooh.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setupBluetooth();
+                //setupBluetooth();
+                openBluetoothSettings();
             }
         });
 
@@ -82,18 +85,21 @@ public class MainFragment extends Fragment {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
                 String info = ((TextView) view).getText().toString();
-                String address = info.substring(info.length() - 17);
+                address = info.substring(info.length() - 17);
 
-                Toast.makeText(getContext(), ""+ address, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Selecionaste: "+ address, Toast.LENGTH_SHORT).show();
 
-                Intent intend = new Intent(getContext(), bluetoothActivity.class);
-                intend.putExtra("EXTRA_DEVICE_ADDRESS", address);
-                startActivity(intend);
 
             }
         });
 
         return view;
+    }
+
+    private void openBluetoothSettings() {
+        Intent intentOpenBluetoothSettings = new Intent();
+        intentOpenBluetoothSettings.setAction(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS);
+        startActivity(intentOpenBluetoothSettings);
     }
 
     Handler handler = new Handler(new Handler.Callback() {
@@ -109,7 +115,21 @@ public class MainFragment extends Fragment {
         // Register for broadcasts when a device is discovered.
         mBtAdapter.startDiscovery();
 
-        getPairedDevices();
+        if(address != null)
+        {
+
+            if(!address.equals(""))
+            {
+                Intent intend = new Intent(getContext(), bluetoothActivity.class);
+                intend.putExtra("EXTRA_DEVICE_ADDRESS", address);
+                startActivity(intend);
+
+            }
+
+        }else
+        {
+            Toast.makeText(getContext(), "No seleccionaste ningun dispositivo", Toast.LENGTH_SHORT).show();
+        }
 
 
     }
@@ -118,7 +138,14 @@ public class MainFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
+        getPairedDevices();
+    }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        getPairedDevices();
     }
 
     private void getPairedDevices() {

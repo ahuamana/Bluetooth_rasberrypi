@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,6 +35,7 @@ public class bluetoothActivity extends AppCompatActivity {
 
     private String mExtraMAC;
     private TextView textviewMAC;
+    Button btnTomarFoto;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,7 +45,12 @@ public class bluetoothActivity extends AppCompatActivity {
         mExtraMAC = getIntent().getStringExtra("EXTRA_DEVICE_ADDRESS");
 
         textviewMAC = findViewById(R.id.textView2);
+        btnTomarFoto = findViewById(R.id.btntomarfoto);
+
+
         textviewMAC.setText(mExtraMAC);
+
+
 
 
         bluetoothIn = new Handler() {
@@ -56,22 +63,57 @@ public class bluetoothActivity extends AppCompatActivity {
         };
 
         btAdapter = BluetoothAdapter.getDefaultAdapter(); // get Bluetooth adapter
+
         VerificarEstadoBT();
 
-//        btnDesconectar.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                if (btSocket!=null)
-//                {
-//                    try {btSocket.close();}
-//                    catch (IOException e)
-//                    { Toast.makeText(getBaseContext(), "Error", Toast.LENGTH_SHORT).show();;}
-//                }
-//                finish();
-//            }
-//        });
+        btnTomarFoto.setOnClickListener(new View.OnClickListener() {
+            @Override
+           public void onClick(View view) {
+               if (btSocket!=null)
+                {
+                    try
+                    {
+                        btSocket.close();
+                    }
+                    catch (IOException e)
+                    {
+                        Toast.makeText(getBaseContext(), "Error", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                finish();
+
+                getRemoteDevice();
+            }
+        });
 
 
+    }
+
+    private void getRemoteDevice() {
+
+        Intent intent = getIntent();
+        address = intent.getStringExtra("EXTRA_DEVICE_ADDRESS");
+        //Setea la direccion MAC
+        BluetoothDevice device = btAdapter.getRemoteDevice(address);
+
+        try
+        {
+            btSocket = createBluetoothSocket(device);
+        } catch (IOException e) {
+            Toast.makeText(getBaseContext(), "La creacción del Socket fallo", Toast.LENGTH_LONG).show();
+        }
+        // Establece la conexión con el socket Bluetooth.
+        try
+        {
+            btSocket.connect();
+        } catch (IOException e) {
+            try {
+                btSocket.close();
+            } catch (IOException e2) {}
+        }
+        MyConexionBT = new ConnectedThread(btSocket);
+        MyConexionBT.start();
     }
 
 
@@ -89,6 +131,9 @@ public class bluetoothActivity extends AppCompatActivity {
 
     }
 
+
+
+
     @Override
     public void onPause()
     {
@@ -96,7 +141,9 @@ public class bluetoothActivity extends AppCompatActivity {
         try
         { // Cuando se sale de la aplicación esta parte permite que no se deje abierto el socket
             btSocket.close();
-        } catch (IOException e2) {}
+        } catch (IOException e2) {
+
+        }
     }
 
     //Comprueba que el dispositivo Bluetooth
