@@ -4,19 +4,18 @@ import androidx.lifecycle.ViewModelProvider;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import android.os.Debug;
 import android.os.Handler;
 import android.os.Message;
-import android.security.identity.ResultData;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,19 +28,29 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.paparazziteam.myapplication.R;
-import com.paparazziteam.myapplication.activities.DispositivosVinculados;
 import com.paparazziteam.myapplication.activities.bluetoothActivity;
+import com.paparazziteam.myapplication.utils.AcceptThread;
+import com.paparazziteam.myapplication.utils.ConnectThread;
+import com.paparazziteam.myapplication.utils.MyBluetoothService;
+import com.paparazziteam.myapplication.viewModels.MainViewModel;
 
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.Executor;
 
 public class MainFragment extends Fragment {
 
     private MainViewModel mViewModel;
+
+    private static final UUID MY_UUID_INSECURE = UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66");
     private BluetoothAdapter mBtAdapter;
+    private BluetoothDevice mDevice = null;
+    private MyBluetoothService myBluetoothService;
+
     private ArrayAdapter mPairedDevicesArrayAdapter;
     Set<BluetoothDevice> pairedDevices;
 
-    Button btnactivarbluetooh, btnconectarRasberry;
+    Button btnpairdevice, btnconectarRasberry;
     ListView listView;
 
     String address;
@@ -57,14 +66,14 @@ public class MainFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.main_fragment, container, false);
 
-        btnactivarbluetooh = view.findViewById(R.id.activatebluetooth);
+        btnpairdevice = view.findViewById(R.id.activatebluetooth);
         btnconectarRasberry = view.findViewById(R.id.connectRasberry);
         listView = view.findViewById(R.id.listView);
 
         bluetoohCheckFeatures();
         setupBluetooth();
 
-        btnactivarbluetooh.setOnClickListener(new View.OnClickListener() {
+        btnpairdevice.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 //setupBluetooth();
@@ -102,29 +111,18 @@ public class MainFragment extends Fragment {
         startActivity(intentOpenBluetoothSettings);
     }
 
-    Handler handler = new Handler(new Handler.Callback() {
-        @Override
-        public boolean handleMessage(@NonNull Message msg) {
-            return false;
-        }
-    });
 
 
     private void conecctRasberry() {
 
-        // Register for broadcasts when a device is discovered.
-        mBtAdapter.startDiscovery();
+        Log.e("TAG", "clicked connected");
 
-        if(address != null)
+        if(mDevice != null)
         {
+           new Thread(new AcceptThread()).start();//instanciate server
 
-            if(!address.equals(""))
-            {
-                Intent intend = new Intent(getContext(), bluetoothActivity.class);
-                intend.putExtra("EXTRA_DEVICE_ADDRESS", address);
-                startActivity(intend);
+           //new Thread(new ConnectThread(mDevice)).start();//instanciate cliente conection
 
-            }
 
         }else
         {
@@ -174,6 +172,14 @@ public class MainFragment extends Fragment {
                 Log.e("DISPOSITIVOS PAIRED","DeviceName: "+deviceName+"  &&  MAC: "+deviceHardwareAddress+"");
                 mPairedDevicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
 
+                mDevice = device;
+
+
+
+                //Log.d("TAG", "Trying to pair with " + deviceName);
+                //boolean outcome = device.createBond();
+                //Log.d("TAG", "Paired status: " + outcome);
+
             }
 
             //Rellenar el arralist
@@ -181,6 +187,7 @@ public class MainFragment extends Fragment {
 
         }
     }
+
 
 
     private void setupBluetooth() {

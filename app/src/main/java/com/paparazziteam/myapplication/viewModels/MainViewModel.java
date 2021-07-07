@@ -1,4 +1,4 @@
-package com.paparazziteam.myapplication.ui.main;
+package com.paparazziteam.myapplication.viewModels;
 
 import androidx.lifecycle.ViewModel;
 

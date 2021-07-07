@@ -1,9 +1,10 @@
-package com.paparazziteam.myapplication;
+package com.paparazziteam.myapplication.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 
+import com.paparazziteam.myapplication.R;
 import com.paparazziteam.myapplication.ui.main.MainFragment;
 
 public class MainActivity extends AppCompatActivity {
